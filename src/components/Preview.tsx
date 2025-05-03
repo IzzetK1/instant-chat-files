@@ -45,12 +45,12 @@ const Preview: React.FC<PreviewProps> = ({ files, activeFile, refreshTrigger }) 
 
       // Intercept console logs
       if (iframeRef.current.contentWindow) {
-        const originalConsole = { ...(iframeRef.current.contentWindow.console || {}) };
+        const originalConsole = { ...(iframeRef.current.contentWindow as any).console || {} };
         const consoleTypes = ['log', 'info', 'warn', 'error'];
         
         consoleTypes.forEach(type => {
-          if (iframeRef.current?.contentWindow?.console) {
-            iframeRef.current.contentWindow.console[type as keyof Console] = (...args: any[]) => {
+          if (iframeRef.current?.contentWindow) {
+            (iframeRef.current.contentWindow as any).console[type] = (...args: any[]) => {
               originalConsole[type]?.apply(originalConsole, args);
               setConsoleMessages(prev => [...prev, { type, args }]);
             };
@@ -65,9 +65,9 @@ const Preview: React.FC<PreviewProps> = ({ files, activeFile, refreshTrigger }) 
   }, [files, refreshTrigger]);
 
   return (
-    <div className="border rounded-md flex flex-col h-full">
+    <div className="border rounded-md flex flex-col h-full bg-code shadow-md">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
-        <div className="flex items-center justify-between p-2 border-b">
+        <div className="flex items-center justify-between p-2 border-b bg-code-header">
           <TabsList className="grid w-fit grid-cols-2">
             <TabsTrigger value="preview">Preview</TabsTrigger>
             <TabsTrigger value="console">Console</TabsTrigger>
@@ -79,6 +79,9 @@ const Preview: React.FC<PreviewProps> = ({ files, activeFile, refreshTrigger }) 
             onClick={() => {
               if (activeTab === 'console') {
                 setConsoleMessages([]);
+              } else {
+                // Refresh the preview
+                setRefreshTrigger(prev => prev + 1);
               }
             }}
           >

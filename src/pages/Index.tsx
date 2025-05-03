@@ -1,4 +1,3 @@
-// Update this page (the content is just a fallback if you fail to update the page)
 
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
@@ -9,12 +8,10 @@ import FileExplorer from '@/components/FileExplorer';
 import CodeEditor from '@/components/CodeEditor';
 import Preview from '@/components/Preview';
 import ChatInterface from '@/components/ChatInterface';
+import ChatHeader from '@/components/ChatHeader';
 import { FileData, Message } from '@/types';
 import { generateId, getFileExtension, createFile, parseCodeBlocks, getInitialFiles } from '@/utils/fileUtils';
-import { sendChatMessage, streamChatMessage } from '@/services/ollamaService';
-
-// We don't need to use the loader from @monaco-editor/react anymore since 
-// we're handling the Monaco setup in the CodeEditor component itself
+import { streamChatMessage, runProject } from '@/services/ollamaService';
 
 const Index = () => {
   const [files, setFiles] = useState<FileData[]>([]);
@@ -22,6 +19,8 @@ const Index = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [selectedModel, setSelectedModel] = useState<string>('llama3');
+  const [runningCommand, setRunningCommand] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Initialize with some default files
@@ -75,6 +74,33 @@ const Index = () => {
     ));
   };
 
+  const handleRunProject = async () => {
+    try {
+      const result = await runProject(files, 'web');
+      setRunningCommand(result.command);
+      
+      toast({
+        title: "Proje Başlatıldı",
+        description: `Komut: ${result.command}`,
+      });
+      
+      // Refresh the preview
+      setRefreshTrigger(prev => prev + 1);
+      
+      // Clear the command after a few seconds to allow for multiple runs
+      setTimeout(() => {
+        setRunningCommand(null);
+      }, 3000);
+    } catch (error) {
+      console.error('Error running project:', error);
+      toast({
+        title: "Hata",
+        description: "Proje başlatılırken bir hata oluştu.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSendMessage = async (content: string) => {
     try {
       // Add user message to the chat
@@ -89,7 +115,7 @@ const Index = () => {
 
       // Collect response chunks
       let responseContent = '';
-      await streamChatMessage(content, 'llama3', (chunk) => {
+      await streamChatMessage(content, selectedModel, (chunk) => {
         responseContent += chunk;
         // Update AI message as chunks arrive
         setMessages((prev) => {
@@ -185,20 +211,25 @@ const Index = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen p-4 space-y-4 bg-background">
-      <header className="flex items-center justify-between pb-2 border-b">
+    <div className="flex flex-col min-h-screen bg-background">
+      <header className="flex items-center justify-between p-4 border-b bg-sidebar shadow-md">
         <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text text-transparent">
           Ollama Kod Asistanı
         </h1>
-        <Button
-          onClick={() => setRefreshTrigger(prev => prev + 1)}
-        >
-          Önizlemeyi Yenile
-        </Button>
+        <div className="flex items-center space-x-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setRefreshTrigger(prev => prev + 1)}
+            className="bg-sidebar-accent text-sidebar-foreground border-sidebar-border"
+          >
+            Önizlemeyi Yenile
+          </Button>
+        </div>
       </header>
       
       <ResizablePanelGroup direction="horizontal" className="flex-1">
-        <ResizablePanel defaultSize={20} minSize={15} className="bg-sidebar rounded-md">
+        <ResizablePanel defaultSize={20} minSize={15} className="bg-sidebar">
           <FileExplorer
             files={files}
             activeFileId={activeFileId}
@@ -207,11 +238,11 @@ const Index = () => {
           />
         </ResizablePanel>
         
-        <ResizableHandle />
+        <ResizableHandle className="bg-sidebar-border w-1" />
         
         <ResizablePanel defaultSize={80}>
           <ResizablePanelGroup direction="vertical">
-            <ResizablePanel defaultSize={50} className="overflow-hidden">
+            <ResizablePanel defaultSize={60} className="overflow-hidden">
               <ResizablePanelGroup direction="horizontal">
                 <ResizablePanel defaultSize={50}>
                   <CodeEditor 
@@ -220,7 +251,7 @@ const Index = () => {
                   />
                 </ResizablePanel>
                 
-                <ResizableHandle />
+                <ResizableHandle className="bg-sidebar-border h-1" />
                 
                 <ResizablePanel defaultSize={50}>
                   <Preview 
@@ -232,14 +263,22 @@ const Index = () => {
               </ResizablePanelGroup>
             </ResizablePanel>
             
-            <ResizableHandle />
+            <ResizableHandle className="bg-sidebar-border h-1" />
             
-            <ResizablePanel defaultSize={50}>
-              <ChatInterface
-                messages={messages}
-                onSendMessage={handleSendMessage}
-                isLoading={isLoading}
-              />
+            <ResizablePanel defaultSize={40} className="border-t border-sidebar-border">
+              <div className="flex flex-col h-full">
+                <ChatHeader 
+                  selectedModel={selectedModel} 
+                  onSelectModel={setSelectedModel}
+                  onRunProject={handleRunProject}
+                  runningCommand={runningCommand} 
+                />
+                <ChatInterface
+                  messages={messages}
+                  onSendMessage={handleSendMessage}
+                  isLoading={isLoading}
+                />
+              </div>
             </ResizablePanel>
           </ResizablePanelGroup>
         </ResizablePanel>

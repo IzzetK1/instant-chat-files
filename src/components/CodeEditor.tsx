@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect } from 'react';
+import React from 'react';
 import Editor from '@monaco-editor/react';
 import { FileData } from '@/types';
 
@@ -19,6 +19,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ file, onContentChange }) => {
       html: 'html',
       css: 'css',
       json: 'json',
+      md: 'markdown',
     };
     
     return langMap[type] || 'plaintext';
@@ -30,12 +31,16 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ file, onContentChange }) => {
 
   return (
     <div 
-      className="h-full w-full border rounded-md overflow-hidden bg-code text-code-foreground"
+      className="h-full w-full border rounded-md overflow-hidden bg-code text-code-foreground shadow-md"
       data-testid="code-editor"
     >
       {!file ? (
-        <div className="h-full flex items-center justify-center text-muted-foreground">
-          Select or create a file to start editing
+        <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-4">
+          <div className="text-4xl mb-4 opacity-20">📝</div>
+          <h3 className="text-lg font-semibold mb-2">No file selected</h3>
+          <p className="text-sm text-center max-w-md opacity-70">
+            Select an existing file from the explorer or create a new one to start editing
+          </p>
         </div>
       ) : (
         <Editor
@@ -46,10 +51,26 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ file, onContentChange }) => {
           theme="vs-dark"
           onChange={handleEditorChange}
           options={{
-            minimap: { enabled: false },
+            minimap: { enabled: true },
             scrollBeyondLastLine: false,
             fontSize: 14,
+            fontFamily: 'JetBrains Mono, Menlo, Monaco, Consolas, monospace',
             padding: { top: 16 },
+            lineNumbers: 'on',
+            roundedSelection: true,
+            cursorStyle: 'line',
+            autoIndent: 'full',
+            formatOnPaste: true,
+            formatOnType: true,
+            wordWrap: 'on',
+            automaticLayout: true,
+            tabSize: 2,
+            scrollbar: {
+              vertical: 'visible',
+              horizontal: 'visible',
+              verticalScrollbarSize: 12,
+              horizontalScrollbarSize: 12
+            }
           }}
         />
       )}

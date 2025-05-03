@@ -93,3 +93,59 @@ export async function streamChatMessage(content: string, model = 'llama3', onChu
     throw error;
   }
 }
+
+export async function fetchAvailableModels() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/tags`);
+    
+    if (!response.ok) {
+      throw new Error(`API request failed with status ${response.status}`);
+    }
+    
+    const data = await response.json();
+    // Extract model names from the response
+    const models = data.models ? data.models.map((model: any) => model.name) : [];
+    return models;
+    
+  } catch (error) {
+    console.error('Error fetching available models:', error);
+    throw error;
+  }
+}
+
+export async function runProject(files: any[], projectType: string) {
+  // Simple project detection and startup command generation
+  let command = '';
+  const fileNames = files.map(file => file.name.toLowerCase());
+  
+  // Check for package.json
+  const hasPackageJson = fileNames.includes('package.json');
+  
+  if (hasPackageJson) {
+    // Check for specific frameworks
+    const isReact = fileNames.some(name => name.includes('react'));
+    const isVue = fileNames.some(name => name.includes('vue'));
+    const isAngular = fileNames.some(name => name.includes('angular'));
+    const isNext = fileNames.some(name => name.includes('next'));
+    
+    if (isNext) {
+      command = 'npm run dev';
+    } else if (isReact) {
+      command = 'npm start';
+    } else if (isVue) {
+      command = 'npm run serve';
+    } else if (isAngular) {
+      command = 'ng serve';
+    } else {
+      command = 'npm start';
+    }
+  } else {
+    // Simple static site
+    command = 'npx serve .';
+  }
+  
+  return {
+    command,
+    projectType: hasPackageJson ? 'npm' : 'static',
+  };
+}

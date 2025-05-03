@@ -64,8 +64,9 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				code: {
-					DEFAULT: '#1e1e1e',
-					foreground: '#d4d4d4'
+					DEFAULT: 'hsl(var(--code-background))',
+					foreground: '#d4d4d4',
+					header: 'hsl(var(--code-header))'
 				}
 			},
 			borderRadius: {
@@ -103,6 +104,9 @@ export default {
 			backgroundImage: {
 				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
 				'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+			},
+			boxShadow: {
+				'code': '0 4px 20px rgba(0, 0, 0, 0.5)',
 			}
 		}
 	},
