@@ -14,6 +14,7 @@ const Preview: React.FC<PreviewProps> = ({ files, activeFile, refreshTrigger }) 
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [activeTab, setActiveTab] = useState<string>('preview');
   const [consoleMessages, setConsoleMessages] = useState<any[]>([]);
+  const [internalRefreshTrigger, setInternalRefreshTrigger] = useState<number>(0);
 
   useEffect(() => {
     if (!iframeRef.current || files.length === 0) return;
@@ -62,7 +63,7 @@ const Preview: React.FC<PreviewProps> = ({ files, activeFile, refreshTrigger }) 
     } catch (error) {
       console.error('Error rendering preview:', error);
     }
-  }, [files, refreshTrigger]);
+  }, [files, refreshTrigger, internalRefreshTrigger]);
 
   return (
     <div className="border rounded-md flex flex-col h-full bg-code shadow-md">
@@ -80,8 +81,8 @@ const Preview: React.FC<PreviewProps> = ({ files, activeFile, refreshTrigger }) 
               if (activeTab === 'console') {
                 setConsoleMessages([]);
               } else {
-                // Refresh the preview
-                setRefreshTrigger(prev => prev + 1);
+                // Refresh the preview using internal state
+                setInternalRefreshTrigger(prev => prev + 1);
               }
             }}
           >
