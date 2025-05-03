@@ -13,12 +13,8 @@ import { FileData, Message } from '@/types';
 import { generateId, getFileExtension, createFile, parseCodeBlocks, getInitialFiles } from '@/utils/fileUtils';
 import { sendChatMessage, streamChatMessage } from '@/services/ollamaService';
 
-// Import monaco editor for the CodeEditor component
-import * as monaco from 'monaco-editor';
-import { loader } from '@monaco-editor/react';
-
-// Initialize Monaco loader
-loader.config({ monaco });
+// We don't need to use the loader from @monaco-editor/react anymore since 
+// we're handling the Monaco setup in the CodeEditor component itself
 
 const Index = () => {
   const [files, setFiles] = useState<FileData[]>([]);

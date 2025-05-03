@@ -44,15 +44,19 @@ const Preview: React.FC<PreviewProps> = ({ files, activeFile, refreshTrigger }) 
       });
 
       // Intercept console logs
-      const originalConsole = { ...(iframeRef.current.contentWindow?.console || {}) };
-      const consoleTypes = ['log', 'info', 'warn', 'error'];
-      
-      consoleTypes.forEach(type => {
-        iframeRef.current!.contentWindow!.console[type] = (...args: any[]) => {
-          originalConsole[type]?.apply(originalConsole, args);
-          setConsoleMessages(prev => [...prev, { type, args }]);
-        };
-      });
+      if (iframeRef.current.contentWindow) {
+        const originalConsole = { ...(iframeRef.current.contentWindow.console || {}) };
+        const consoleTypes = ['log', 'info', 'warn', 'error'];
+        
+        consoleTypes.forEach(type => {
+          if (iframeRef.current?.contentWindow?.console) {
+            iframeRef.current.contentWindow.console[type as keyof Console] = (...args: any[]) => {
+              originalConsole[type]?.apply(originalConsole, args);
+              setConsoleMessages(prev => [...prev, { type, args }]);
+            };
+          }
+        });
+      }
 
       doc.close();
     } catch (error) {

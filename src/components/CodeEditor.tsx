@@ -1,6 +1,6 @@
 
 import React, { useRef, useEffect } from 'react';
-import * as Monaco from 'monaco-editor';
+import Editor from '@monaco-editor/react';
 import { FileData } from '@/types';
 
 interface CodeEditorProps {
@@ -9,52 +9,7 @@ interface CodeEditorProps {
 }
 
 const CodeEditor: React.FC<CodeEditorProps> = ({ file, onContentChange }) => {
-  const editorRef = useRef<HTMLDivElement>(null);
-  const monacoEditorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
-
-  useEffect(() => {
-    if (!editorRef.current) return;
-
-    // Initialize Monaco Editor
-    monacoEditorRef.current = Monaco.editor.create(editorRef.current, {
-      value: file?.content || '',
-      language: getLanguageFromFileType(file?.type || 'js'),
-      theme: 'vs-dark',
-      minimap: { enabled: false },
-      automaticLayout: true,
-      scrollBeyondLastLine: false,
-      fontSize: 14,
-      padding: { top: 16 },
-    });
-
-    // Set up change handler
-    const changeModel = monacoEditorRef.current.onDidChangeModelContent(() => {
-      const value = monacoEditorRef.current?.getValue() || '';
-      onContentChange(value);
-    });
-
-    return () => {
-      changeModel?.dispose();
-      monacoEditorRef.current?.dispose();
-    };
-  }, []);
-
-  // Update editor content when file changes
-  useEffect(() => {
-    if (monacoEditorRef.current && file) {
-      const currentValue = monacoEditorRef.current.getValue();
-      if (currentValue !== file.content) {
-        monacoEditorRef.current.setValue(file.content);
-      }
-
-      Monaco.editor.setModelLanguage(
-        monacoEditorRef.current.getModel()!,
-        getLanguageFromFileType(file.type)
-      );
-    }
-  }, [file]);
-
-  // Helper function to determine language based on file type
+  // Get language based on file type
   const getLanguageFromFileType = (type: string): string => {
     const langMap: Record<string, string> = {
       js: 'javascript',
@@ -69,17 +24,35 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ file, onContentChange }) => {
     return langMap[type] || 'plaintext';
   };
 
+  const handleEditorChange = (value: string = '') => {
+    onContentChange(value);
+  };
+
   return (
     <div 
       className="h-full w-full border rounded-md overflow-hidden bg-code text-code-foreground"
       data-testid="code-editor"
     >
-      {!file && (
+      {!file ? (
         <div className="h-full flex items-center justify-center text-muted-foreground">
           Select or create a file to start editing
         </div>
+      ) : (
+        <Editor
+          height="100%"
+          defaultLanguage={getLanguageFromFileType(file.type)}
+          language={getLanguageFromFileType(file.type)}
+          value={file.content}
+          theme="vs-dark"
+          onChange={handleEditorChange}
+          options={{
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            fontSize: 14,
+            padding: { top: 16 },
+          }}
+        />
       )}
-      <div ref={editorRef} className="h-full w-full" style={{ display: file ? 'block' : 'none' }} />
     </div>
   );
 };
