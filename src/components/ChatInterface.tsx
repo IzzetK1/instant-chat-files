@@ -5,6 +5,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { Message } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import Editor from '@monaco-editor/react';
+import { Copy } from 'lucide-react';
 
 interface ChatInterfaceProps {
   messages: Message[];
@@ -49,6 +51,87 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }).format(date);
   };
 
+  // Kod bloklarını tanımlama ve render etme
+  const renderMessageContent = (content: string) => {
+    // Düzenli ifade ile markdown kod bloklarını bul
+    const codeBlockRegex = /```([\w]*)\n([\s\S]*?)```/g;
+    const parts = [];
+    
+    let lastIndex = 0;
+    let match;
+    
+    // Her kod bloğunu işle
+    while ((match = codeBlockRegex.exec(content)) !== null) {
+      // Kod bloğundan önceki metni ekle
+      if (match.index > lastIndex) {
+        parts.push({
+          type: 'text',
+          content: content.slice(lastIndex, match.index),
+        });
+      }
+      
+      // Kod bloğunu ekle
+      parts.push({
+        type: 'code',
+        language: match[1] || 'javascript',
+        content: match[2],
+      });
+      
+      lastIndex = match.index + match[0].length;
+    }
+    
+    // Kalan metni ekle
+    if (lastIndex < content.length) {
+      parts.push({
+        type: 'text',
+        content: content.slice(lastIndex),
+      });
+    }
+    
+    // Parçaları render et
+    return parts.map((part, i) => {
+      if (part.type === 'text') {
+        return <div key={i} className="whitespace-pre-wrap mb-2">{part.content}</div>;
+      } else {
+        return (
+          <div key={i} className="mb-4 rounded-md overflow-hidden border border-gray-700">
+            <div className="bg-gray-800 px-3 py-1 text-xs flex justify-between items-center">
+              <span>{part.language}</span>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-6 w-6 p-0" 
+                onClick={() => {
+                  navigator.clipboard.writeText(part.content);
+                  toast({ title: "Kod kopyalandı" });
+                }}
+              >
+                <Copy className="h-3 w-3" />
+              </Button>
+            </div>
+            <div className="h-auto max-h-[300px]">
+              <Editor
+                height="auto"
+                defaultLanguage={part.language || 'javascript'}
+                defaultValue={part.content}
+                options={{
+                  readOnly: true,
+                  minimap: { enabled: false },
+                  fontSize: 12,
+                  scrollBeyondLastLine: false,
+                  automaticLayout: true,
+                  lineNumbers: 'on',
+                  fontFamily: 'JetBrains Mono, Menlo, Monaco, Consolas, monospace',
+                }}
+                theme="vs-dark"
+              />
+            </div>
+          </div>
+        );
+      }
+    });
+  };
+
   return (
     <div className="flex flex-col h-full border rounded-md">
       <div className="p-3 border-b bg-sidebar">
@@ -65,13 +148,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               }`}
             >
               <div 
-                className={`max-w-[80%] rounded-lg p-3 ${
+                className={`max-w-[85%] rounded-lg p-3 ${
                   message.role === 'user' 
                     ? 'bg-primary text-primary-foreground' 
                     : 'bg-secondary text-secondary-foreground'
                 }`}
               >
-                <div className="whitespace-pre-wrap">{message.content}</div>
+                {renderMessageContent(message.content)}
               </div>
               <span className="text-xs text-muted-foreground mt-1">
                 {formatDate(message.timestamp)}
