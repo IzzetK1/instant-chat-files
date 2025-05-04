@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import { FileData } from '@/types';
 
@@ -9,6 +8,12 @@ interface CodeEditorProps {
 }
 
 const CodeEditor: React.FC<CodeEditorProps> = ({ file, onContentChange }) => {
+  useEffect(() => {
+    if (file) {
+      console.log(`AI tarafından oluşturulan dosya açıldı: ${file.name}`);
+    }
+  }, [file]);
+
   // Get language based on file type
   const getLanguageFromFileType = (type: string): string => {
     const langMap: Record<string, string> = {

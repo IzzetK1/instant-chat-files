@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { FileData } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -179,12 +178,10 @@ const FileExplorer: React.FC<FileExplorerProps> = ({
   };
 
   const renderFolderStructure = (folder: FolderStructure, depth = 0) => {
-    // Arama sorgusu varsa filtreleme yap
     const filteredChildren = searchQuery 
       ? folder.children.filter(child => child.name.toLowerCase().includes(searchQuery.toLowerCase()))
       : folder.children;
 
-    // Klasörleri önce, dosyaları sonra sırala
     const sortedChildren = [...filteredChildren].sort((a, b) => {
       if (a.isFolder && !b.isFolder) return -1;
       if (!a.isFolder && b.isFolder) return 1;
@@ -192,9 +189,9 @@ const FileExplorer: React.FC<FileExplorerProps> = ({
     });
 
     return (
-      <div className="pl-[10px]" style={{ paddingLeft: depth ? `${depth * 12}px` : '0' }}>
+      <div className="pl-[10px] transition-all duration-300" style={{ paddingLeft: depth ? `${depth * 12}px` : '0' }}>
         {sortedChildren.map((item) => (
-          <div key={item.isFolder ? item.name : item.id}>
+          <div key={item.isFolder ? item.name : item.id} className="group relative">
             {item.isFolder ? (
               <div>
                 <div 
@@ -203,9 +200,9 @@ const FileExplorer: React.FC<FileExplorerProps> = ({
                 >
                   <span className="mr-1">
                     {expandedFolders.has(item.name) ? (
-                      <ChevronDown className="h-3.5 w-3.5 text-sidebar-foreground opacity-70" />
+                      <ChevronDown className="h-3.5 w-3.5 text-sidebar-foreground opacity-70 transition-transform" />
                     ) : (
-                      <ChevronRight className="h-3.5 w-3.5 text-sidebar-foreground opacity-70" />
+                      <ChevronRight className="h-3.5 w-3.5 text-sidebar-foreground opacity-70 transition-transform" />
                     )}
                   </span>
                   <span className="mr-1.5">
@@ -239,7 +236,6 @@ const FileExplorer: React.FC<FileExplorerProps> = ({
                           className="h-6 w-6 p-0" 
                           onClick={(e) => {
                             e.stopPropagation();
-                            // Kopyalama işlemine hazırlık
                             navigator.clipboard.writeText(item.content || '');
                             toast({
                               title: "Dosya içeriği kopyalandı",
